@@ -4,11 +4,11 @@ from airflow import DAG
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 
-ERP_CHANGE_DATE = airflow.utils.dates.days_ago(1)
+DATA_SOURCE_DATE = airflow.utils.dates.days_ago(1)
 
 
 def _pick_erp_system(**context):
-    if context["execution_date"] < ERP_CHANGE_DATE:
+    if context["execution_date"] < DATA_SOURCE_DATE:
         return "fetch_sales_old"
     else:
         return "fetch_sales_new"
@@ -55,7 +55,7 @@ with DAG(
         task_id="clean_sales_new", python_callable=_clean_sales_new
     )
 
-    join_erp = DummyOperator(task_id="join_data_source_branch", trigger_rule="none_failed")
+    join_data_source = DummyOperator(task_id="join_data_source_branch", trigger_rule="none_failed")
 
     fetch_weather = DummyOperator(task_id="fetch_weather")
     clean_weather = DummyOperator(task_id="clean_weather")
@@ -68,7 +68,7 @@ with DAG(
     pick_erp_system >> [fetch_sales_old, fetch_sales_new]
     fetch_sales_old >> clean_sales_old
     fetch_sales_new >> clean_sales_new
-    [clean_sales_old, clean_sales_new] >> join_erp
+    [clean_sales_old, clean_sales_new] >> join_data_source
     fetch_weather >> clean_weather
-    [join_erp, clean_weather] >> join_datasets
+    [join_data_source, clean_weather] >> join_datasets
     join_datasets >> train_model >> deploy_model

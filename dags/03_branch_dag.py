@@ -30,7 +30,7 @@ def _clean_sales_new(**context):
 
 
 with DAG(
-    dag_id="original_branch_DAG",
+    dag_id="pick_data_source_branch_DAG",
     start_date=airflow.utils.dates.days_ago(3),
     schedule_interval="@daily",
 ) as dag:
